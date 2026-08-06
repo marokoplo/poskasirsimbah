@@ -32,7 +32,6 @@
         color: #000;
         line-height: 1.2;
       }
-      /* Mengatur margin kertas printer thermal */
       @page {
         margin: 0;
       }
@@ -121,7 +120,7 @@
             </button>
           </div>
 
-          <div class="overflow-y-auto max-h-[260px] mb-4">
+          <div class="overflow-y-auto max-h-[200px] mb-4">
             <table class="w-full text-left text-sm">
               <thead class="bg-gray-50 text-gray-500 border-b">
                 <tr>
@@ -138,14 +137,29 @@
           </div>
         </div>
 
-        <!-- Summary, Metode Pembayaran & Checkout -->
+        <!-- Summary, Diskon, Metode Pembayaran & Checkout -->
         <div class="border-t pt-4 bg-gray-50 -mx-5 -mb-5 p-5 rounded-b-xl space-y-3">
+          
+          <!-- FEATURE: INPUT DISKON / PROMO -->
+          <div class="bg-white p-3 rounded-lg border border-amber-200">
+            <label class="block text-xs font-semibold text-amber-700 uppercase mb-1.5 flex items-center gap-1">
+              <i class="fa-solid fa-tags text-amber-600"></i> Diskon / Promo Transaksi
+            </label>
+            <div class="flex gap-2">
+              <select id="tipe-diskon" onchange="hitungRingkasanKasir()" class="text-xs p-2 border rounded-lg bg-gray-50 font-semibold focus:ring-2 focus:ring-amber-500">
+                <option value="persen">Persen (%)</option>
+                <option value="nominal">Nominal (Rp)</option>
+              </select>
+              <input type="number" id="nilai-diskon" min="0" value="0" oninput="hitungRingkasanKasir()" placeholder="Nilai diskon" class="w-full p-2 border text-sm rounded-lg focus:ring-2 focus:ring-amber-500 font-semibold">
+            </div>
+          </div>
+
           <!-- Pilihan Metode Pembayaran / Kanal Pesanan -->
           <div>
             <label class="block text-xs font-semibold text-gray-600 uppercase mb-1 flex items-center gap-1">
               <i class="fa-solid fa-wallet text-blue-600"></i> Metode Pembayaran / Kanal Pesanan
             </label>
-            <select id="metode-pembayaran" class="w-full p-2.5 border rounded-lg bg-white font-semibold text-gray-700 focus:ring-2 focus:ring-blue-500">
+            <select id="metode-pembayaran" class="w-full p-2.5 border rounded-lg bg-white font-semibold text-gray-700 focus:ring-2 focus:ring-blue-500 text-sm">
               <option value="Tunai">💵 Tunai</option>
               <option value="QRIS">📱 QRIS</option>
               <option value="Transfer">🏦 Transfer Bank</option>
@@ -155,13 +169,20 @@
             </select>
           </div>
 
-          <div class="flex justify-between items-center">
-            <span class="text-gray-600 font-medium">Total Items:</span>
-            <span id="total-qty-keranjang" class="font-bold text-gray-800">0 pcs</span>
-          </div>
-          <div class="flex justify-between items-center">
-            <span class="text-lg font-bold text-gray-800">Total Tagihan:</span>
-            <span id="total-penjualan" class="text-2xl font-black text-green-600">Rp 0</span>
+          <!-- RINCIAN HARGA & DISKON -->
+          <div class="space-y-1 border-t pt-2 text-sm">
+            <div class="flex justify-between items-center text-gray-600">
+              <span>Subtotal (Qty: <span id="total-qty-keranjang">0 pcs</span>):</span>
+              <span id="subtotal-penjualan" class="font-bold">Rp 0</span>
+            </div>
+            <div id="row-potongan-diskon" class="flex justify-between items-center text-amber-600 hidden">
+              <span>Potongan Diskon:</span>
+              <span id="nom-potongan-diskon" class="font-bold">- Rp 0</span>
+            </div>
+            <div class="flex justify-between items-center border-t pt-1">
+              <span class="text-lg font-bold text-gray-800">Total Tagihan:</span>
+              <span id="total-penjualan" class="text-2xl font-black text-green-600">Rp 0</span>
+            </div>
           </div>
 
           <button onclick="simpanPenjualan()" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-md transition flex justify-center items-center gap-2 text-lg">
@@ -174,8 +195,6 @@
 
     <!-- 2. TAB STOK & PRODUK -->
     <div id="section-stok" class="hidden space-y-6">
-      
-      <!-- Banner Header Manajemen Inventaris Produk -->
       <div class="bg-white p-5 rounded-xl shadow-sm border flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
@@ -248,8 +267,6 @@
 
     <!-- 3. TAB PENGELUARAN -->
     <div id="section-pengeluaran" class="hidden grid grid-cols-1 lg:grid-cols-12 gap-6">
-      
-      <!-- Form Input Pengeluaran -->
       <div class="lg:col-span-4 bg-white p-5 rounded-xl shadow-sm border">
         <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
           <i class="fa-solid fa-file-invoice-dollar text-red-600"></i> Catat Pengeluaran
@@ -277,7 +294,6 @@
         </form>
       </div>
 
-      <!-- Tabel Daftar Pengeluaran -->
       <div class="lg:col-span-8 bg-white p-5 rounded-xl shadow-sm border">
         <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
           <i class="fa-solid fa-list text-red-600"></i> Riwayat Pengeluaran
@@ -304,8 +320,6 @@
 
     <!-- 4. TAB LAPORAN LABA / RUGI -->
     <div id="section-laporan" class="hidden space-y-6">
-      
-      <!-- Card Ringkasan Laporan -->
       <div class="bg-white p-5 rounded-xl shadow-sm border">
         <div class="flex flex-wrap justify-between items-center gap-4 mb-6">
           <div>
@@ -351,7 +365,8 @@
                 <th class="p-3">Waktu</th>
                 <th class="p-3">Kanal / Metode</th>
                 <th class="p-3">Rincian Items</th>
-                <th class="p-3 text-right">Total</th>
+                <th class="p-3 text-right">Diskon</th>
+                <th class="p-3 text-right">Total Akhir</th>
                 <th class="p-3 text-center">Aksi</th>
               </tr>
             </thead>
@@ -361,7 +376,6 @@
           </table>
         </div>
       </div>
-
     </div>
 
     <!-- 5. TAB PENGATURAN TOKO -->
@@ -389,7 +403,6 @@
           <textarea id="input-pesan-struk" rows="2" placeholder="Misal: Terima Kasih Atas Kunjungan Anda!" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
         </div>
 
-        <!-- PILIHAN UKURAN PRINTER THERMAL -->
         <div class="border-t pt-4">
           <label class="block text-xs font-semibold text-gray-600 uppercase mb-1 flex items-center gap-1">
             <i class="fa-solid fa-ruler-horizontal text-blue-600"></i> Ukuran Kertas Printer Thermal
@@ -431,7 +444,6 @@
       ukuranKertas: "58mm"
     };
 
-    // Migrate old product structure without HPP if any
     masterProduk = masterProduk.map(p => ({
       ...p,
       hpp: p.hpp !== undefined ? p.hpp : 0
@@ -573,16 +585,12 @@
     function renderKeranjang() {
       const tbody = document.getElementById('tabel-keranjang');
       tbody.innerHTML = '';
-      let total = 0;
-      let totalQty = 0;
 
       if(keranjang.length === 0) {
         tbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-gray-400">Keranjang masih kosong</td></tr>`;
       }
 
       keranjang.forEach((item, index) => {
-        total += item.subtotal;
-        totalQty += item.qty;
         tbody.innerHTML += `
           <tr>
             <td class="p-2 font-medium text-gray-800">${item.nama}</td>
@@ -597,8 +605,41 @@
         `;
       });
 
+      hitungRingkasanKasir();
+    }
+
+    // HITUNG SUBAL, DISKON & TOTAL PENJUALAN
+    function hitungRingkasanKasir() {
+      let subtotal = keranjang.reduce((s, i) => s + i.subtotal, 0);
+      let totalQty = keranjang.reduce((s, i) => s + i.qty, 0);
+
+      const tipeDiskon = document.getElementById('tipe-diskon').value;
+      const nilaiDiskon = parseFloat(document.getElementById('nilai-diskon').value) || 0;
+
+      let potongan = 0;
+      if(tipeDiskon === 'persen') {
+        potongan = (subtotal * nilaiDiskon) / 100;
+      } else {
+        potongan = nilaiDiskon;
+      }
+
+      // Jangan biarkan potongan melebihi subtotal
+      if(potongan > subtotal) potongan = subtotal;
+
+      const totalAkhir = subtotal - potongan;
+
       document.getElementById('total-qty-keranjang').innerText = `${totalQty} pcs`;
-      document.getElementById('total-penjualan').innerText = 'Rp ' + total.toLocaleString();
+      document.getElementById('subtotal-penjualan').innerText = 'Rp ' + subtotal.toLocaleString();
+
+      const rowDiskon = document.getElementById('row-potongan-diskon');
+      if(potongan > 0) {
+        rowDiskon.classList.remove('hidden');
+        document.getElementById('nom-potongan-diskon').innerText = '- Rp ' + potongan.toLocaleString();
+      } else {
+        rowDiskon.classList.add('hidden');
+      }
+
+      document.getElementById('total-penjualan').innerText = 'Rp ' + totalAkhir.toLocaleString();
     }
 
     function updateQtyKeranjang(index, val) {
@@ -627,6 +668,7 @@
 
     function kosongkanKeranjang() {
       keranjang = [];
+      document.getElementById('nilai-diskon').value = 0;
       renderKeranjang();
     }
 
@@ -634,19 +676,28 @@
       if(keranjang.length === 0) return alert('Keranjang transaksi masih kosong!');
 
       const metode = document.getElementById('metode-pembayaran').value;
+      const subtotalTrans = keranjang.reduce((s, i) => s + i.subtotal, 0);
+      
+      const tipeDiskon = document.getElementById('tipe-diskon').value;
+      const nilaiDiskonInput = parseFloat(document.getElementById('nilai-diskon').value) || 0;
+      let potonganTrans = tipeDiskon === 'persen' ? (subtotalTrans * nilaiDiskonInput) / 100 : nilaiDiskonInput;
+      if(potonganTrans > subtotalTrans) potonganTrans = subtotalTrans;
 
+      const totalTrans = subtotalTrans - potonganTrans;
+      const totalHPPTrans = keranjang.reduce((s, i) => s + ((i.hpp || 0) * i.qty), 0);
+
+      // Kurangi stok
       keranjang.forEach(k => {
         masterProduk[k.indexMaster].stok -= k.qty;
       });
-
-      const totalTrans = keranjang.reduce((s, i) => s + i.subtotal, 0);
-      const totalHPPTrans = keranjang.reduce((s, i) => s + ((i.hpp || 0) * i.qty), 0);
 
       const transaksiBaru = {
         id: 'TRX-' + Date.now().toString().slice(-6),
         waktu: new Date().toLocaleString('id-ID'),
         metode: metode,
         items: [...keranjang],
+        subtotal: subtotalTrans,
+        diskon: potonganTrans,
         total: totalTrans,
         totalHPP: totalHPPTrans
       };
@@ -654,6 +705,7 @@
       riwayatPenjualan.push(transaksiBaru);
 
       keranjang = [];
+      document.getElementById('nilai-diskon').value = 0;
       triggerAutoSave();
       renderPilihanKasir();
 
@@ -662,12 +714,11 @@
       }
     }
 
-    // --- FITUR CETAK STRUK THERMAL (58mm / 80mm) ---
+    // --- FITUR CETAK STRUK THERMAL ---
     function cetakStruk(trx) {
       const area = document.getElementById('area-cetak-struk');
       let itemRows = '';
 
-      // Penyesuaian Lebar Berdasarkan Setting
       const lebarPaper = configToko.ukuranKertas === '80mm' ? '78mm' : '48mm';
       const fontSize = configToko.ukuranKertas === '80mm' ? '12px' : '10px';
       
@@ -683,6 +734,20 @@
         `;
       });
 
+      let barisDiskon = '';
+      if(trx.diskon && trx.diskon > 0) {
+        barisDiskon = `
+          <div style="display: flex; justify-content: space-between; font-size: 9px; margin-bottom: 2px;">
+            <span>Subtotal :</span>
+            <span>Rp ${trx.subtotal.toLocaleString()}</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 9px; margin-bottom: 4px;">
+            <span>Diskon/Promo :</span>
+            <span>- Rp ${trx.diskon.toLocaleString()}</span>
+          </div>
+        `;
+      }
+
       area.innerHTML = `
         <div style="width: ${lebarPaper}; font-size: ${fontSize}; font-family: monospace; color: #000; padding-bottom: 20px;">
           <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 6px; margin-bottom: 6px;">
@@ -697,6 +762,7 @@
           <div style="border-bottom: 1px dashed #000; padding-bottom: 6px; margin-bottom: 6px;">
             ${itemRows}
           </div>
+          ${barisDiskon}
           <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 12px; margin-bottom: 8px;">
             <span>TOTAL :</span>
             <span>Rp ${trx.total.toLocaleString()}</span>
@@ -870,11 +936,14 @@
       riwayatPenjualan.forEach((p, index) => {
         const detail = p.items.map(i => `${i.nama} (${i.qty}x)`).join(', ');
         const metode = p.metode || 'Tunai';
+        const diskonText = p.diskon && p.diskon > 0 ? `-Rp ${p.diskon.toLocaleString()}` : '-';
+
         tbody.innerHTML += `
           <tr>
             <td class="p-3 text-xs text-gray-500">${p.waktu}</td>
             <td class="p-3 text-xs"><span class="px-2 py-1 rounded bg-blue-50 text-blue-700 font-bold border border-blue-200">${metode}</span></td>
             <td class="p-3 text-gray-800">${detail}</td>
+            <td class="p-3 text-right font-semibold text-amber-600">${diskonText}</td>
             <td class="p-3 text-right font-bold text-green-600">Rp ${p.total.toLocaleString()}</td>
             <td class="p-3 text-center flex justify-center gap-2">
               <button onclick="cetakStrukRiwayat(${index})" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-2.5 py-1 rounded text-xs border font-semibold flex items-center gap-1">
@@ -892,9 +961,17 @@
     function unduhExcel() {
       const wb = XLSX.utils.book_new();
 
-      const dataPenjualan = [["Waktu", "Metode / Kanal", "Detail Items", "Total Transaksi", "Total HPP (Modal)"]];
+      const dataPenjualan = [["Waktu", "Metode / Kanal", "Detail Items", "Subtotal", "Diskon", "Total Akhir", "Total HPP (Modal)"]];
       riwayatPenjualan.forEach(p => {
-        dataPenjualan.push([p.waktu, p.metode || 'Tunai', p.items.map(i => `${i.nama} (${i.qty}x)`).join(', '), p.total, p.totalHPP || 0]);
+        dataPenjualan.push([
+          p.waktu, 
+          p.metode || 'Tunai', 
+          p.items.map(i => `${i.nama} (${i.qty}x)`).join(', '), 
+          p.subtotal || p.total,
+          p.diskon || 0,
+          p.total, 
+          p.totalHPP || 0
+        ]);
       });
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(dataPenjualan), "Penjualan");
 
