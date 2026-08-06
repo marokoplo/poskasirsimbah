@@ -14,40 +14,45 @@
     }
   </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-gray-100 min-h-screen pb-12">
   <!-- Header / Navigation -->
   <header class="bg-white shadow">
     <div class="max-w-7xl mx-auto px-4 py-4 flex flex-wrap justify-between items-center">
-      <h1 class="text-2xl font-bold text-blue-600">POS Kasir Simbah</h1>
-      <nav class="flex space-x-4 mt-2 sm:mt-0">
-        <button onclick="switchTab('kasir')" id="tab-kasir" class="tab-btn active py-2 px-4 text-gray-600">Kasir (Penjualan)</button>
-        <button onclick="switchTab('pengeluaran')" id="tab-pengeluaran" class="tab-btn py-2 px-4 text-gray-600">Pengeluaran</button>
-        <button onclick="switchTab('laporan')" id="tab-laporan" class="tab-btn py-2 px-4 text-gray-600">Laporan & Unduh</button>
+      <div class="flex items-center gap-3">
+        <h1 class="text-2xl font-bold text-blue-600">POS Kasir Simbah</h1>
+        <span id="autosave-status" class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">Autosave: Aktif</span>
+      </div>
+      
+      <div class="flex items-center gap-3 mt-2 sm:mt-0">
+        <button onclick="simpanManual()" class="bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700 font-medium flex items-center gap-1 shadow">
+          💾 Simpan Data
+        </button>
+        <button onclick="exportBackupData()" class="bg-gray-600 text-white px-3 py-1.5 rounded text-sm hover:bg-gray-700 font-medium text-xs">
+          Backup JSON
+        </button>
+      </div>
+
+      <nav class="w-full flex space-x-2 mt-4 border-t pt-2 overflow-x-auto">
+        <button onclick="switchTab('kasir')" id="tab-kasir" class="tab-btn active py-2 px-4 text-gray-600 whitespace-nowrap">🛒 Kasir POS</button>
+        <button onclick="switchTab('stok')" id="tab-stok" class="tab-btn py-2 px-4 text-gray-600 whitespace-nowrap">📦 Stok & Produk</button>
+        <button onclick="switchTab('pengeluaran')" id="tab-pengeluaran" class="tab-btn py-2 px-4 text-gray-600 whitespace-nowrap">💸 Pengeluaran</button>
+        <button onclick="switchTab('laporan')" id="tab-laporan" class="tab-btn py-2 px-4 text-gray-600 whitespace-nowrap">📊 Laporan Laba/Rugi</button>
       </nav>
     </div>
   </header>
 
   <main class="max-w-7xl mx-auto px-4 py-6">
-    <!-- TAB KASIR -->
+    <!-- 1. TAB KASIR POS -->
     <div id="section-kasir" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <!-- Input Produk -->
+      <!-- Pilih Produk dari Master Stok -->
       <div class="bg-white p-6 rounded-lg shadow col-span-1">
-        <h2 class="text-xl font-bold mb-4 text-gray-800">Tambah Produk / Barang</h2>
-        <form id="form-produk" onsubmit="tambahKeKeranjang(event)">
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700">Nama Barang</label>
-            <input type="text" id="nama-barang" required class="w-full mt-1 p-2 border rounded-md">
-          </div>
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700">Harga Satuan (Rp)</label>
-            <input type="number" id="harga-barang" min="0" required class="w-full mt-1 p-2 border rounded-md">
-          </div>
-          <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700">Jumlah / Qty</label>
-            <input type="number" id="qty-barang" min="1" value="1" required class="w-full mt-1 p-2 border rounded-md">
-          </div>
-          <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700">Tambah ke Keranjang</button>
-        </form>
+        <h2 class="text-xl font-bold mb-4 text-gray-800">Pilih Produk</h2>
+        <div class="mb-4">
+          <input type="text" id="cari-produk-kasir" onkeyup="filterProdukKasir()" placeholder="Cari nama barang..." class="w-full p-2 border rounded-md">
+        </div>
+        <div id="daftar-produk-pilih" class="space-y-2 max-h-96 overflow-y-auto pr-1">
+          <!-- Item produk dipanggil via JavaScript -->
+        </div>
       </div>
 
       <!-- Keranjang Belanja -->
@@ -60,35 +65,79 @@
                 <th class="p-2">Barang</th>
                 <th class="p-2">Harga</th>
                 <th class="p-2">Qty</th>
-                <th class="p-2">Total</th>
+                <th class="p-2">Subtotal</th>
                 <th class="p-2">Aksi</th>
               </tr>
             </thead>
-            <tbody id="tabel-keranjang">
-              <!-- Item keranjang -->
-            </tbody>
+            <tbody id="tabel-keranjang"></tbody>
           </table>
         </div>
         <div class="mt-6 flex justify-between items-center border-t pt-4">
-          <span class="text-lg font-bold">Total Penjualan:</span>
+          <span class="text-lg font-bold">Total Transaksi:</span>
           <span id="total-penjualan" class="text-2xl font-bold text-green-600">Rp 0</span>
         </div>
-        <button onclick="simpanPenjualan()" class="mt-4 w-full bg-green-600 text-white py-3 rounded-md font-bold text-lg hover:bg-green-700">Simpan Transaksi Penjualan</button>
+        <button onclick="simpanPenjualan()" class="mt-4 w-full bg-green-600 text-white py-3 rounded-md font-bold text-lg hover:bg-green-700 shadow">
+          Selesaikan Transaksi & Simpan
+        </button>
       </div>
     </div>
 
-    <!-- TAB PENGELUARAN (DENGAN QTY, HARGA SATUAN, & TOTAL) -->
+    <!-- 2. TAB STOK & PRODUK -->
+    <div id="section-stok" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Form Master Produk -->
+      <div class="bg-white p-6 rounded-lg shadow col-span-1">
+        <h2 class="text-xl font-bold mb-4 text-gray-800">Tambah / Edit Produk</h2>
+        <form id="form-master-produk" onsubmit="tambahAtauUpdateProduk(event)">
+          <input type="hidden" id="edit-produk-index" value="-1">
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700">Nama Produk</label>
+            <input type="text" id="master-nama-produk" required class="w-full mt-1 p-2 border rounded-md">
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700">Harga Jual (Rp)</label>
+            <input type="number" id="master-harga-produk" min="0" required class="w-full mt-1 p-2 border rounded-md">
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gray-700">Jumlah Stok</label>
+            <input type="number" id="master-stok-produk" min="0" required class="w-full mt-1 p-2 border rounded-md">
+          </div>
+          <button type="submit" id="btn-simpan-produk" class="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700">
+            Simpan Produk
+          </button>
+        </form>
+      </div>
+
+      <!-- Tabel Daftar Stok Produk -->
+      <div class="bg-white p-6 rounded-lg shadow col-span-2">
+        <h2 class="text-xl font-bold mb-4 text-gray-800">Daftar Stok Produk</h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b bg-gray-50">
+                <th class="p-2">Nama Produk</th>
+                <th class="p-2">Harga</th>
+                <th class="p-2">Stok Tersedia</th>
+                <th class="p-2">Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="tabel-master-produk"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. TAB PENGELUARAN (DENGAN QTY & HARGA SATUAN) -->
     <div id="section-pengeluaran" class="hidden grid grid-cols-1 md:grid-cols-3 gap-6">
       <!-- Form Input Pengeluaran -->
       <div class="bg-white p-6 rounded-lg shadow col-span-1">
         <h2 class="text-xl font-bold mb-4 text-gray-800">Input Pengeluaran</h2>
         <form id="form-pengeluaran" onsubmit="tambahPengeluaran(event)">
           <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700">Nama/Keterangan Pengeluaran</label>
-            <input type="text" id="ket-pengeluaran" placeholder="Misal: Beli Es Batu / Bayar Listrik" required class="w-full mt-1 p-2 border rounded-md">
+            <label class="block text-sm font-medium text-gray-700">Keterangan Pengeluaran</label>
+            <input type="text" id="ket-pengeluaran" placeholder="Misal: Es Batu / Kantong Plastik" required class="w-full mt-1 p-2 border rounded-md">
           </div>
           <div class="mb-4">
-            <label class="block text-sm font-medium text-gray-700">Kuantitas / Jumlah Item</label>
+            <label class="block text-sm font-medium text-gray-700">Kuantitas / Qty</label>
             <input type="number" id="qty-pengeluaran" min="1" value="1" oninput="hitungTotalPengeluaran()" required class="w-full mt-1 p-2 border rounded-md">
           </div>
           <div class="mb-4">
@@ -105,7 +154,7 @@
 
       <!-- Tabel Daftar Pengeluaran -->
       <div class="bg-white p-6 rounded-lg shadow col-span-2">
-        <h2 class="text-xl font-bold mb-4 text-gray-800">Daftar Pengeluaran Hari Ini</h2>
+        <h2 class="text-xl font-bold mb-4 text-gray-800">Daftar Pengeluaran</h2>
         <div class="overflow-x-auto">
           <table class="w-full text-left border-collapse">
             <thead>
@@ -118,22 +167,16 @@
                 <th class="p-2">Aksi</th>
               </tr>
             </thead>
-            <tbody id="tabel-pengeluaran">
-              <!-- Item Pengeluaran -->
-            </tbody>
+            <tbody id="tabel-pengeluaran"></tbody>
           </table>
-        </div>
-        <div class="mt-6 flex justify-between items-center border-t pt-4">
-          <span class="text-lg font-bold">Total Pengeluaran:</span>
-          <span id="total-pengeluaran-harian" class="text-2xl font-bold text-red-600">Rp 0</span>
         </div>
       </div>
     </div>
 
-    <!-- TAB LAPORAN -->
+    <!-- 4. TAB LAPORAN LABA / RUGI -->
     <div id="section-laporan" class="hidden bg-white p-6 rounded-lg shadow">
       <div class="flex justify-between items-center mb-6">
-        <h2 class="text-xl font-bold text-gray-800">Ringkasan Laporan Keuangan</h2>
+        <h2 class="text-xl font-bold text-gray-800">Laporan Laba / Rugi</h2>
         <button onclick="unduhExcel()" class="bg-emerald-600 text-white px-4 py-2 rounded-md hover:bg-emerald-700 font-bold flex items-center gap-2">
           📥 Unduh Laporan Excel (.xlsx)
         </button>
@@ -149,7 +192,7 @@
           <div id="lap-total-pengeluaran" class="text-2xl font-bold text-red-700">Rp 0</div>
         </div>
         <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <div class="text-sm text-blue-600 font-medium">Laba Bersih / Keuntungan</div>
+          <div class="text-sm text-blue-600 font-medium">Laba / (Rugi) Bersih</div>
           <div id="lap-laba-bersih" class="text-2xl font-bold text-blue-700">Rp 0</div>
         </div>
       </div>
@@ -187,34 +230,185 @@
   </main>
 
   <script>
+    // Data Master & Transaksi dengan Auto-Load LocalStorage
+    let masterProduk = JSON.parse(localStorage.getItem('pos_master_produk')) || [
+      { nama: "Produk Contoh", harga: 10000, stok: 50 }
+    ];
     let keranjang = [];
     let riwayatPenjualan = JSON.parse(localStorage.getItem('pos_penjualan')) || [];
     let riwayatPengeluaran = JSON.parse(localStorage.getItem('pos_pengeluaran')) || [];
 
+    // Tampilkan Indikator AutoSave
+    function triggerAutoSave() {
+      localStorage.setItem('pos_master_produk', JSON.stringify(masterProduk));
+      localStorage.setItem('pos_penjualan', JSON.stringify(riwayatPenjualan));
+      localStorage.setItem('pos_pengeluaran', JSON.stringify(riwayatPengeluaran));
+      
+      const badge = document.getElementById('autosave-status');
+      badge.innerText = "Autosave: Tersimpan";
+      badge.classList.replace('bg-green-100', 'bg-blue-100');
+      badge.classList.replace('text-green-700', 'text-blue-700');
+      setTimeout(() => {
+        badge.innerText = "Autosave: Aktif";
+        badge.classList.replace('bg-blue-100', 'bg-green-100');
+        badge.classList.replace('text-blue-700', 'text-green-700');
+      }, 1000);
+    }
+
+    function simpanManual() {
+      triggerAutoSave();
+      alert("✅ Seluruh data berhasil disimpan dengan aman!");
+    }
+
+    function exportBackupData() {
+      const data = {
+        masterProduk,
+        riwayatPenjualan,
+        riwayatPengeluaran,
+        backupAt: new Date().toLocaleString('id-ID')
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `Backup_POS_Kasir_Simbah_${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+    }
+
+    // Switch Tab
     function switchTab(tabName) {
       document.getElementById('section-kasir').classList.add('hidden');
+      document.getElementById('section-stok').classList.add('hidden');
       document.getElementById('section-pengeluaran').classList.add('hidden');
       document.getElementById('section-laporan').classList.add('hidden');
 
       document.getElementById('tab-kasir').classList.remove('active');
+      document.getElementById('tab-stok').classList.remove('active');
       document.getElementById('tab-pengeluaran').classList.remove('active');
       document.getElementById('tab-laporan').classList.remove('active');
 
       document.getElementById('section-' + tabName).classList.remove('hidden');
       document.getElementById('tab-' + tabName).classList.add('active');
 
+      if(tabName === 'kasir') renderPilihanKasir();
+      if(tabName === 'stok') renderMasterProduk();
+      if(tabName === 'pengeluaran') renderPengeluaran();
       if(tabName === 'laporan') updateLaporan();
     }
 
-    // --- LOGIKA KASIR ---
-    function tambahKeKeranjang(e) {
-      e.preventDefault();
-      const nama = document.getElementById('nama-barang').value;
-      const harga = parseFloat(document.getElementById('harga-barang').value);
-      const qty = parseInt(document.getElementById('qty-barang').value);
+    // --- LOGIKA STOK & PRODUK ---
+    function renderMasterProduk() {
+      const tbody = document.getElementById('tabel-master-produk');
+      tbody.innerHTML = '';
+      masterProduk.forEach((p, index) => {
+        tbody.innerHTML += `
+          <tr class="border-b">
+            <td class="p-2">${p.nama}</td>
+            <td class="p-2">Rp ${p.harga.toLocaleString()}</td>
+            <td class="p-2"><span class="${p.stok <= 5 ? 'text-red-600 font-bold' : ''}">${p.stok}</span></td>
+            <td class="p-2 space-x-2">
+              <button onclick="editProduk(${index})" class="text-blue-600 hover:underline">Edit</button>
+              <button onclick="hapusProduk(${index})" class="text-red-600 hover:underline">Hapus</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
 
-      keranjang.push({ nama, harga, qty, total: harga * qty });
-      document.getElementById('form-produk').reset();
+    function tambahAtauUpdateProduk(e) {
+      e.preventDefault();
+      const idx = parseInt(document.getElementById('edit-produk-index').value);
+      const nama = document.getElementById('master-nama-produk').value;
+      const harga = parseFloat(document.getElementById('master-harga-produk').value);
+      const stok = parseInt(document.getElementById('master-stok-produk').value);
+
+      if(idx === -1) {
+        masterProduk.push({ nama, harga, stok });
+      } else {
+        masterProduk[idx] = { nama, harga, stok };
+        document.getElementById('edit-produk-index').value = "-1";
+        document.getElementById('btn-simpan-produk').innerText = "Simpan Produk";
+      }
+
+      document.getElementById('form-master-produk').reset();
+      triggerAutoSave();
+      renderMasterProduk();
+    }
+
+    function editProduk(index) {
+      const p = masterProduk[index];
+      document.getElementById('edit-produk-index').value = index;
+      document.getElementById('master-nama-produk').value = p.nama;
+      document.getElementById('master-harga-produk').value = p.harga;
+      document.getElementById('master-stok-produk').value = p.stok;
+      document.getElementById('btn-simpan-produk').innerText = "Update Produk";
+    }
+
+    function hapusProduk(index) {
+      if(confirm("Yakin ingin menghapus produk ini?")) {
+        masterProduk.splice(index, 1);
+        triggerAutoSave();
+        renderMasterProduk();
+      }
+    }
+
+    // --- LOGIKA KASIR POS ---
+    function renderPilihanKasir() {
+      const div = document.getElementById('daftar-produk-pilih');
+      div.innerHTML = '';
+      masterProduk.forEach((p, index) => {
+        div.innerHTML += `
+          <div class="p-3 border rounded-lg flex justify-between items-center bg-gray-50 hover:bg-gray-100">
+            <div>
+              <div class="font-bold text-gray-800">${p.nama}</div>
+              <div class="text-sm text-gray-600">Rp ${p.harga.toLocaleString()} | Stok: ${p.stok}</div>
+            </div>
+            <button onclick="tambahKeKeranjang(${index})" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700" ${p.stok <= 0 ? 'disabled class="opacity-50"' : ''}>
+              + Tambah
+            </button>
+          </div>
+        `;
+      });
+    }
+
+    function filterProdukKasir() {
+      const query = document.getElementById('cari-produk-kasir').value.toLowerCase();
+      const div = document.getElementById('daftar-produk-pilih');
+      div.innerHTML = '';
+      masterProduk.forEach((p, index) => {
+        if(p.nama.toLowerCase().includes(query)) {
+          div.innerHTML += `
+            <div class="p-3 border rounded-lg flex justify-between items-center bg-gray-50 hover:bg-gray-100">
+              <div>
+                <div class="font-bold text-gray-800">${p.nama}</div>
+                <div class="text-sm text-gray-600">Rp ${p.harga.toLocaleString()} | Stok: ${p.stok}</div>
+              </div>
+              <button onclick="tambahKeKeranjang(${index})" class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
+                + Tambah
+              </button>
+            </div>
+          `;
+        }
+      });
+    }
+
+    function tambahKeKeranjang(indexMaster) {
+      const p = masterProduk[indexMaster];
+      if(p.stok <= 0) return alert('Stok barang habis!');
+
+      const exist = keranjang.find(k => k.indexMaster === indexMaster);
+      if(exist) {
+        if(exist.qty + 1 > p.stok) return alert('Kuantitas melebihi stok yang ada!');
+        exist.qty += 1;
+        exist.subtotal = exist.qty * exist.harga;
+      } else {
+        keranjang.push({
+          indexMaster: indexMaster,
+          nama: p.nama,
+          harga: p.harga,
+          qty: 1,
+          subtotal: p.harga
+        });
+      }
       renderKeranjang();
     }
 
@@ -224,13 +418,15 @@
       let total = 0;
 
       keranjang.forEach((item, index) => {
-        total += item.total;
+        total += item.subtotal;
         tbody.innerHTML += `
           <tr class="border-b">
             <td class="p-2">${item.nama}</td>
             <td class="p-2">Rp ${item.harga.toLocaleString()}</td>
-            <td class="p-2">${item.qty}</td>
-            <td class="p-2">Rp ${item.total.toLocaleString()}</td>
+            <td class="p-2">
+              <input type="number" min="1" value="${item.qty}" onchange="updateQtyKeranjang(${index}, this.value)" class="w-16 p-1 border rounded text-center">
+            </td>
+            <td class="p-2">Rp ${item.subtotal.toLocaleString()}</td>
             <td class="p-2">
               <button onclick="hapusKeranjang(${index})" class="text-red-500 hover:underline">Hapus</button>
             </td>
@@ -240,6 +436,26 @@
       document.getElementById('total-penjualan').innerText = 'Rp ' + total.toLocaleString();
     }
 
+    function updateQtyKeranjang(index, qtyBaru) {
+      qtyBaru = parseInt(qtyBaru);
+      const item = keranjang[index];
+      const p = masterProduk[item.indexMaster];
+
+      if(qtyBaru > p.stok) {
+        alert('Stok tidak mencukupi!');
+        renderKeranjang();
+        return;
+      }
+
+      if(qtyBaru <= 0) {
+        hapusKeranjang(index);
+      } else {
+        item.qty = qtyBaru;
+        item.subtotal = item.qty * item.harga;
+        renderKeranjang();
+      }
+    }
+
     function hapusKeranjang(index) {
       keranjang.splice(index, 1);
       renderKeranjang();
@@ -247,20 +463,29 @@
 
     function simpanPenjualan() {
       if(keranjang.length === 0) return alert('Keranjang masih kosong!');
-      const totalTrans = keranjang.reduce((sum, item) => sum + item.total, 0);
+
+      // Kurangi stok master
+      keranjang.forEach(k => {
+        masterProduk[k.indexMaster].stok -= k.qty;
+      });
+
+      const totalTrans = keranjang.reduce((sum, item) => sum + item.subtotal, 0);
       const transaksi = {
         waktu: new Date().toLocaleString('id-ID'),
         items: keranjang,
         total: totalTrans
       };
+
       riwayatPenjualan.push(transaksi);
-      localStorage.setItem('pos_penjualan', JSON.stringify(riwayatPenjualan));
       keranjang = [];
+
+      triggerAutoSave();
       renderKeranjang();
-      alert('Transaksi Penjualan Berhasil Disimpan!');
+      renderPilihanKasir();
+      alert('✅ Transaksi Penjualan Berhasil Disimpan!');
     }
 
-    // --- LOGIKA PENGELUARAN (QTY + HARGA SATUAN) ---
+    // --- LOGIKA PENGELUARAN DETAIL ---
     function hitungTotalPengeluaran() {
       const qty = parseFloat(document.getElementById('qty-pengeluaran').value) || 0;
       const harga = parseFloat(document.getElementById('harga-pengeluaran').value) || 0;
@@ -274,28 +499,26 @@
       const hargaSatuan = parseFloat(document.getElementById('harga-pengeluaran').value);
       const total = qty * hargaSatuan;
 
-      const pengeluaran = {
+      riwayatPengeluaran.push({
         waktu: new Date().toLocaleString('id-ID'),
         keterangan: ket,
         qty: qty,
         hargaSatuan: hargaSatuan,
         total: total
-      };
+      });
 
-      riwayatPengeluaran.push(pengeluaran);
-      localStorage.setItem('pos_pengeluaran', JSON.stringify(riwayatPengeluaran));
       document.getElementById('form-pengeluaran').reset();
       document.getElementById('qty-pengeluaran').value = 1;
+      
+      triggerAutoSave();
       renderPengeluaran();
     }
 
     function renderPengeluaran() {
       const tbody = document.getElementById('tabel-pengeluaran');
       tbody.innerHTML = '';
-      let totalHarian = 0;
 
       riwayatPengeluaran.forEach((item, index) => {
-        totalHarian += item.total;
         tbody.innerHTML += `
           <tr class="border-b">
             <td class="p-2">${item.waktu}</td>
@@ -309,16 +532,17 @@
           </tr>
         `;
       });
-      document.getElementById('total-pengeluaran-harian').innerText = 'Rp ' + totalHarian.toLocaleString();
     }
 
     function hapusPengeluaran(index) {
-      riwayatPengeluaran.splice(index, 1);
-      localStorage.setItem('pos_pengeluaran', JSON.stringify(riwayatPengeluaran));
-      renderPengeluaran();
+      if(confirm("Hapus catatan pengeluaran ini?")) {
+        riwayatPengeluaran.splice(index, 1);
+        triggerAutoSave();
+        renderPengeluaran();
+      }
     }
 
-    // --- LOGIKA LAPORAN & EXCEL ---
+    // --- LOGIKA LAPORAN & UNDUH EXCEL ---
     function updateLaporan() {
       const totalOmset = riwayatPenjualan.reduce((sum, item) => sum + item.total, 0);
       const totalPengeluaran = riwayatPengeluaran.reduce((sum, item) => sum + item.total, 0);
@@ -328,7 +552,7 @@
       document.getElementById('lap-total-pengeluaran').innerText = 'Rp ' + totalPengeluaran.toLocaleString();
       document.getElementById('lap-laba-bersih').innerText = 'Rp ' + labaBersih.toLocaleString();
 
-      // Tabel Riwayat Penjualan
+      // Tabel Penjualan
       const tbodyPenjualan = document.getElementById('tabel-riwayat-penjualan');
       tbodyPenjualan.innerHTML = '';
       riwayatPenjualan.forEach(p => {
@@ -342,7 +566,7 @@
         `;
       });
 
-      // Tabel Riwayat Pengeluaran
+      // Tabel Pengeluaran
       const tbodyPengeluaran = document.getElementById('tabel-riwayat-pengeluaran');
       tbodyPengeluaran.innerHTML = '';
       riwayatPengeluaran.forEach(p => {
@@ -382,7 +606,7 @@
     }
 
     // Inisialisasi awal
-    renderPengeluaran();
+    renderPilihanKasir();
   </script>
 </body>
 </html>
