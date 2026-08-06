@@ -140,7 +140,7 @@
         <!-- Summary, Diskon, Metode Pembayaran & Checkout -->
         <div class="border-t pt-4 bg-gray-50 -mx-5 -mb-5 p-5 rounded-b-xl space-y-3">
           
-          <!-- FEATURE: INPUT DISKON / PROMO -->
+          <!-- INPUT DISKON / PROMO -->
           <div class="bg-white p-3 rounded-lg border border-amber-200">
             <label class="block text-xs font-semibold text-amber-700 uppercase mb-1.5 flex items-center gap-1">
               <i class="fa-solid fa-tags text-amber-600"></i> Diskon / Promo Transaksi
@@ -272,6 +272,15 @@
           <i class="fa-solid fa-file-invoice-dollar text-red-600"></i> Catat Pengeluaran
         </h2>
         <form id="form-pengeluaran" onsubmit="tambahPengeluaran(event)" class="space-y-4">
+          
+          <!-- TANGGAL PENGELUARAN -->
+          <div>
+            <label class="block text-xs font-semibold text-gray-600 uppercase mb-1 flex items-center gap-1">
+              <i class="fa-solid fa-calendar-days text-red-600"></i> Tanggal Pengeluaran
+            </label>
+            <input type="date" id="tgl-pengeluaran" required class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-red-500 font-semibold text-gray-700">
+          </div>
+
           <div>
             <label class="block text-xs font-semibold text-gray-600 uppercase mb-1">Keterangan Pengeluaran</label>
             <input type="text" id="ket-pengeluaran" placeholder="Misal: Es Batu / Sedotan" required class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-red-500">
@@ -302,7 +311,7 @@
           <table class="w-full text-left text-sm border-collapse">
             <thead>
               <tr class="bg-gray-50 border-b text-gray-600">
-                <th class="p-3">Waktu</th>
+                <th class="p-3">Tanggal</th>
                 <th class="p-3">Keterangan</th>
                 <th class="p-3">Qty</th>
                 <th class="p-3">Harga Satuan</th>
@@ -449,6 +458,13 @@
       hpp: p.hpp !== undefined ? p.hpp : 0
     }));
 
+    // Inisialisasi Tanggal Hari Ini untuk Input Pengeluaran
+    function initTanggalPengeluaran() {
+      const today = new Date().toISOString().split('T')[0];
+      const el = document.getElementById('tgl-pengeluaran');
+      if (el && !el.value) el.value = today;
+    }
+
     // --- SYSTEM AUTOSAVE & MANUAL SAVE ---
     function triggerAutoSave() {
       localStorage.setItem('pos_master_produk', JSON.stringify(masterProduk));
@@ -512,7 +528,10 @@
 
       if(tabName === 'kasir') renderPilihanKasir();
       if(tabName === 'stok') renderMasterProduk();
-      if(tabName === 'pengeluaran') renderPengeluaran();
+      if(tabName === 'pengeluaran') {
+        initTanggalPengeluaran();
+        renderPengeluaran();
+      }
       if(tabName === 'laporan') updateLaporan();
       if(tabName === 'pengaturan') loadPengaturanToko();
     }
@@ -623,7 +642,6 @@
         potongan = nilaiDiskon;
       }
 
-      // Jangan biarkan potongan melebihi subtotal
       if(potongan > subtotal) potongan = subtotal;
 
       const totalAkhir = subtotal - potongan;
@@ -874,12 +892,22 @@
 
     function tambahPengeluaran(e) {
       e.preventDefault();
+      const tglInput = document.getElementById('tgl-pengeluaran').value;
       const ket = document.getElementById('ket-pengeluaran').value;
       const qty = parseInt(document.getElementById('qty-pengeluaran').value);
       const hargaSatuan = parseFloat(document.getElementById('harga-pengeluaran').value);
 
+      // Format tanggal
+      let tglFormatted = tglInput;
+      if(tglInput) {
+        const parts = tglInput.split('-');
+        if(parts.length === 3) {
+          tglFormatted = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+      }
+
       riwayatPengeluaran.push({
-        waktu: new Date().toLocaleString('id-ID'),
+        waktu: tglFormatted || new Date().toLocaleDateString('id-ID'),
         keterangan: ket,
         qty,
         hargaSatuan,
@@ -888,6 +916,7 @@
 
       document.getElementById('form-pengeluaran').reset();
       document.getElementById('qty-pengeluaran').value = 1;
+      initTanggalPengeluaran();
       triggerAutoSave();
       renderPengeluaran();
     }
@@ -895,10 +924,15 @@
     function renderPengeluaran() {
       const tbody = document.getElementById('tabel-pengeluaran');
       tbody.innerHTML = '';
+      
+      if(riwayatPengeluaran.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="text-center py-6 text-gray-400">Belum ada catatan pengeluaran</td></tr>`;
+      }
+
       riwayatPengeluaran.forEach((item, index) => {
         tbody.innerHTML += `
           <tr>
-            <td class="p-3 text-xs text-gray-500">${item.waktu}</td>
+            <td class="p-3 text-xs font-semibold text-gray-600">${item.waktu}</td>
             <td class="p-3 font-semibold text-gray-800">${item.keterangan}</td>
             <td class="p-3">${item.qty}</td>
             <td class="p-3">Rp ${item.hargaSatuan.toLocaleString()}</td>
@@ -975,7 +1009,7 @@
       });
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(dataPenjualan), "Penjualan");
 
-      const dataPengeluaran = [["Waktu", "Keterangan", "Qty", "Harga Satuan", "Total"]];
+      const dataPengeluaran = [["Tanggal", "Keterangan", "Qty", "Harga Satuan", "Total"]];
       riwayatPengeluaran.forEach(p => {
         dataPengeluaran.push([p.waktu, p.keterangan, p.qty, p.hargaSatuan, p.total]);
       });
@@ -993,6 +1027,7 @@
     // Inisialisasi awal
     loadPengaturanToko();
     renderPilihanKasir();
+    initTanggalPengeluaran();
   </script>
 </body>
 </html>
