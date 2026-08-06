@@ -14,7 +14,7 @@
       font-weight: bold;
     }
 
-    /* CSS Khusus Cetak Struk */
+    /* CSS Khusus Cetak Struk Printer Thermal */
     @media print {
       body * {
         visibility: hidden;
@@ -26,12 +26,15 @@
         position: absolute;
         left: 0;
         top: 0;
-        width: 80mm;
         margin: 0;
-        padding: 10px;
+        padding: 0;
         font-family: 'Courier New', Courier, monospace;
         color: #000;
-        font-size: 12px;
+        line-height: 1.2;
+      }
+      /* Mengatur margin kertas printer thermal */
+      @page {
+        margin: 0;
       }
     }
   </style>
@@ -365,9 +368,9 @@
     <div id="section-pengaturan" class="hidden max-w-2xl mx-auto bg-white p-6 rounded-xl shadow-sm border space-y-6">
       <div class="border-b pb-3">
         <h2 class="text-xl font-bold text-gray-800 flex items-center gap-2">
-          <i class="fa-solid fa-store text-blue-600"></i> Pengaturan Informasi Toko
+          <i class="fa-solid fa-print text-blue-600"></i> Pengaturan Toko & Printer Struk
         </h2>
-        <p class="text-xs text-gray-500 mt-0.5">Atur nama toko dan teks cetakan struk pembayaran Anda</p>
+        <p class="text-xs text-gray-500 mt-0.5">Atur nama toko, pesan footer, serta ukuran kertas printer thermal Anda</p>
       </div>
 
       <form id="form-pengaturan-toko" onsubmit="simpanPengaturanToko(event)" class="space-y-4">
@@ -386,15 +389,27 @@
           <textarea id="input-pesan-struk" rows="2" placeholder="Misal: Terima Kasih Atas Kunjungan Anda!" class="w-full p-2.5 border rounded-lg focus:ring-2 focus:ring-blue-500"></textarea>
         </div>
 
+        <!-- PILIHAN UKURAN PRINTER THERMAL -->
+        <div class="border-t pt-4">
+          <label class="block text-xs font-semibold text-gray-600 uppercase mb-1 flex items-center gap-1">
+            <i class="fa-solid fa-ruler-horizontal text-blue-600"></i> Ukuran Kertas Printer Thermal
+          </label>
+          <select id="input-ukuran-kertas" class="w-full p-2.5 border rounded-lg bg-white font-semibold text-gray-700 focus:ring-2 focus:ring-blue-500">
+            <option value="58mm">🖨️ 58 mm (Printer Bluetooth / Mini Portable - Paling Umum)</option>
+            <option value="80mm">🖨️ 80 mm (Printer Desktop USB / Thermal Besar)</option>
+          </select>
+          <p class="text-[11px] text-gray-500 mt-1">*Pilih ukuran yang sesuai dengan mesin printer cetak Anda agar struk tidak terpotong.</p>
+        </div>
+
         <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow transition flex justify-center items-center gap-2">
-          <i class="fa-solid fa-floppy-disk"></i> Simpan Pengaturan Toko
+          <i class="fa-solid fa-floppy-disk"></i> Simpan Pengaturan
         </button>
       </form>
     </div>
 
   </main>
 
-  <!-- TEMPLATE HIDDEN KHUSUS CETAK STRUK -->
+  <!-- TEMPLATE HIDDEN KHUSUS CETAK STRUK THERMAL -->
   <div id="area-cetak-struk" class="hidden"></div>
 
   <script>
@@ -412,7 +427,8 @@
     let configToko = JSON.parse(localStorage.getItem('pos_config_toko')) || {
       namaToko: "POS Kasir Simbah",
       alamatToko: "Jl. Merdeka No. 45",
-      pesanStruk: "Terima Kasih Atas Kunjungan Anda!"
+      pesanStruk: "Terima Kasih Atas Kunjungan Anda!",
+      ukuranKertas: "58mm"
     };
 
     // Migrate old product structure without HPP if any
@@ -457,6 +473,7 @@
       document.getElementById('input-nama-toko').value = configToko.namaToko || "";
       document.getElementById('input-alamat-toko').value = configToko.alamatToko || "";
       document.getElementById('input-pesan-struk').value = configToko.pesanStruk || "";
+      document.getElementById('input-ukuran-kertas').value = configToko.ukuranKertas || "58mm";
     }
 
     function simpanPengaturanToko(e) {
@@ -464,10 +481,11 @@
       configToko.namaToko = document.getElementById('input-nama-toko').value;
       configToko.alamatToko = document.getElementById('input-alamat-toko').value;
       configToko.pesanStruk = document.getElementById('input-pesan-struk').value;
+      configToko.ukuranKertas = document.getElementById('input-ukuran-kertas').value;
 
       triggerAutoSave();
       loadPengaturanToko();
-      alert("✅ Informasi toko berhasil diperbarui!");
+      alert("✅ Informasi & Ukuran Cetakan Struk Toko Berhasil Disimpan!");
     }
 
     // --- SWITCH TAB NAVIGATION ---
@@ -639,46 +657,53 @@
       triggerAutoSave();
       renderPilihanKasir();
 
-      // Tanya apakah ingin langsung cetak struk
-      if(confirm('🎉 Transaksi Berhasil! Apakah Anda mau mencetak struk transaksi ini?')) {
+      if(confirm('🎉 Transaksi Berhasil! Cetak Struk?')) {
         cetakStruk(transaksiBaru);
       }
     }
 
-    // --- FITUR CETAK STRUK ---
+    // --- FITUR CETAK STRUK THERMAL (58mm / 80mm) ---
     function cetakStruk(trx) {
       const area = document.getElementById('area-cetak-struk');
       let itemRows = '';
+
+      // Penyesuaian Lebar Berdasarkan Setting
+      const lebarPaper = configToko.ukuranKertas === '80mm' ? '78mm' : '48mm';
+      const fontSize = configToko.ukuranKertas === '80mm' ? '12px' : '10px';
       
       trx.items.forEach(i => {
         itemRows += `
-          <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
-            <span>${i.nama} x${i.qty}</span>
-            <span>Rp ${i.subtotal.toLocaleString()}</span>
+          <div style="margin-bottom: 4px;">
+            <div><b>${i.nama}</b></div>
+            <div style="display: flex; justify-content: space-between;">
+              <span>${i.qty} x Rp ${i.harga.toLocaleString()}</span>
+              <span>Rp ${i.subtotal.toLocaleString()}</span>
+            </div>
           </div>
         `;
       });
 
       area.innerHTML = `
-        <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 8px; margin-bottom: 8px;">
-          <h2 style="margin: 0; font-size: 16px; font-weight: bold; text-transform: uppercase;">${configToko.namaToko || 'POS KASIR SIMBAH'}</h2>
-          ${configToko.alamatToko ? `<p style="margin: 2px 0 0 0; font-size: 11px;">${configToko.alamatToko}</p>` : ''}
-          <p style="margin: 2px 0 0 0; font-size: 11px;">Struk Bukti Pembayaran</p>
-        </div>
-        <div style="font-size: 11px; margin-bottom: 8px; border-bottom: 1px dashed #000; padding-bottom: 6px;">
-          <div>No. TRX : ${trx.id}</div>
-          <div>Waktu   : ${trx.waktu}</div>
-          <div>Kanal   : <b>${trx.metode}</b></div>
-        </div>
-        <div style="font-size: 11px; border-bottom: 1px dashed #000; padding-bottom: 8px; margin-bottom: 8px;">
-          ${itemRows}
-        </div>
-        <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 13px; margin-bottom: 12px;">
-          <span>TOTAL :</span>
-          <span>Rp ${trx.total.toLocaleString()}</span>
-        </div>
-        <div style="text-align: center; font-size: 11px; border-top: 1px dashed #000; pt-2; margin-top: 8px;">
-          <p style="margin: 5px 0 0 0;">${configToko.pesanStruk || 'Terima Kasih Atas Kunjungan Anda!'}</p>
+        <div style="width: ${lebarPaper}; font-size: ${fontSize}; font-family: monospace; color: #000; padding-bottom: 20px;">
+          <div style="text-align: center; border-bottom: 1px dashed #000; padding-bottom: 6px; margin-bottom: 6px;">
+            <div style="font-size: 13px; font-weight: bold; text-transform: uppercase;">${configToko.namaToko || 'POS KASIR'}</div>
+            ${configToko.alamatToko ? `<div style="font-size: 9px; margin-top:2px;">${configToko.alamatToko}</div>` : ''}
+          </div>
+          <div style="font-size: 9px; margin-bottom: 6px; border-bottom: 1px dashed #000; padding-bottom: 4px;">
+            <div>TRX : ${trx.id}</div>
+            <div>TGL : ${trx.waktu}</div>
+            <div>PAY : <b>${trx.metode}</b></div>
+          </div>
+          <div style="border-bottom: 1px dashed #000; padding-bottom: 6px; margin-bottom: 6px;">
+            ${itemRows}
+          </div>
+          <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 12px; margin-bottom: 8px;">
+            <span>TOTAL :</span>
+            <span>Rp ${trx.total.toLocaleString()}</span>
+          </div>
+          <div style="text-align: center; font-size: 9px; border-top: 1px dashed #000; pt-2; margin-top: 6px;">
+            <p style="margin: 4px 0 0 0;">${configToko.pesanStruk || 'Terima Kasih!'}</p>
+          </div>
         </div>
       `;
 
